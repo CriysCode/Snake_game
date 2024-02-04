@@ -1,0 +1,9 @@
+# Game Window: Setting up a window where the game will be played.
+# Snake: Creating the snake, which is typically a chain of segments that moves around the screen.
+# Movement: Enabling the snake to move and controlling its direction with keyboard inputs.
+# Food: Generating food items for the snake to eat.
+# Growth Mechanism: Making the snake grow longer each time it eats food.
+# Collision Detection: Handling collisions with the game borders and with the snake itself.
+# Score Keeping: Keeping track of and displaying the score based on the food eaten.
+# Game Over: Ending the game when the snake collides with itself or the game borders, and possibly implementing a restart feature.
+# To get started, which part of the game would you like to focus on first? Do you have any specific questions or areas where you feel you need more guidance? Let's start this journey together, with you in the driver's seat!
