@@ -1,3 +1,4 @@
+
 import collections
 from pygame.locals import *
 import pygame.font
@@ -51,7 +52,29 @@ class Snake:
         if pygame.Rect(self.snake_body[0], (self.segment_size, self.segment_size)).colliderect(pygame.Rect(self.apple.start_spawn_x_y, (self.apple.applesize, self.apple.applesize))):
             return True
     def snake_hit_self(self):
-        pass
+        x_head, y_head = self.snake_body[0]
+        snake_head = x_head, y_head
+        for segments in range(2,len(self.snake_body)):
+            if snake_head == self.snake_body[segments]:
+                return True
+    
+
+    def border_return(self):
+        x_head, y_head = self.snake_body[0]
+        #from left screen to right screen
+        if x_head == -10:
+            self.snake_body.appendleft((600, y_head))
+            self.snake_body.pop()
+        if x_head == 610:
+            self.snake_body.appendleft((0, y_head))
+            self.snake_body.pop()
+        if y_head == -10:
+            self.snake_body.appendleft((x_head, 800))
+            self.snake_body.pop()
+        if y_head == 810:
+            self.snake_body.appendleft((x_head, 0))
+            self.snake_body.pop()
+        
 class App:
     def __init__(self):
         self._running = True
@@ -63,6 +86,7 @@ class App:
         self.font = 'times new roman'
         self.score = 0
         self.fps = 20
+        self.game_over = False
 
     def on_init(self):
         pygame.init()
@@ -70,8 +94,41 @@ class App:
         self._running = True
         return True
     
+    def restart_game(self):
+        self.apple = Apple()
+        self.snake = Snake(self.apple)
+        self.score = 0
+        self.fps = 20
+        self.game_over = False
+        pygame.display.flip()
+
     def game_over_screen(self):
-        pass
+        self._display_surf.fill(self.black)
+        surface = pygame.Surface(self.size)
+        surface.fill(self.black)
+        pygame.font.init()
+        game_over_str = 'Game Over!'
+        game_over_font = pygame.font.SysFont(None, 100)
+        game_over_text = game_over_font.render(game_over_str, True, (255,255,255), None)
+        press_space = 'Press Space To Play Again!'
+        press_space_font = pygame.font.SysFont(None, 60)
+        press_space_text = press_space_font.render(press_space, True, (255,255,255), None) 
+
+        while self.game_over:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.on_cleanup()
+                    
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE:
+                        self.restart_game()
+                        return 
+            surface.blit(game_over_text, (self.width / 2 - game_over_text.get_width() / 2, self.height * 0.10))
+            self._display_surf.blit(game_over_text, (self.width / 2 - game_over_text.get_width() / 2, self.height * 0.10))
+            surface.blit(press_space_text, (self.width / 2 - press_space_text.get_width() / 2, self.height * 0.20))
+            self._display_surf.blit(press_space_text, (self.width / 2 - press_space_text.get_width() / 2, self.height * 0.20))
+            pygame.display.update()
+
 
     
 
@@ -79,7 +136,7 @@ class App:
         pygame.font.init()
         score_font = pygame.font.SysFont(None, 43)
         text = score_font.render(str(self.score), True, (255,255,255), None)
-        self._display_surf.blit(text, (self.width / 2, self.height * 0.10))
+        self._display_surf.blit(text, (self.width // 2, self.height * 0.10))
         pygame.display.flip()
 
     def on_event(self, event):
@@ -96,23 +153,28 @@ class App:
                 self.snake.direction = 'RIGHT'
 
     def on_loop(self):
-        clockobject = pygame.time.Clock()
-        clockobject.tick(self.fps)
-        self.snake.snake_move()
-        self.snake.draw_snake(self._display_surf)
-        if self.snake.eats_apple():
-            #balance this later
-            self.score += 10
-            if self.score >= 100:
-                self.fps += self.fps * 0.010
-            if self.score >= 200:
-                self.fps += self.fps * 0.010
-            if self.score >= 300:
-                self.fps += self.fps * 0.010
-            if self.score >= 400:
-                self.fps += self.fps * 0.010
-            self.snake.grow_snake()
-            self.apple.respawn_apple()
+        #while self._running:     
+            clockobject = pygame.time.Clock()
+            clockobject.tick(self.fps)
+            self.snake.snake_move()
+            self.snake.draw_snake(self._display_surf)
+            self.snake.border_return()
+            if self.snake.eats_apple():
+                #balance this later
+                self.score += 10
+                if self.score >= 100:
+                    self.fps += self.fps * 0.010
+                if self.score >= 500:
+                    self.fps += self.fps * 0.010
+                if self.score >= 750:
+                    self.fps += self.fps * 0.010
+                if self.score >= 1000:
+                    self.fps += self.fps * 0.010
+                self.snake.grow_snake()
+                self.apple.respawn_apple()
+            if self.snake.snake_hit_self():
+                    self.game_over = True    
+                
 
     def on_render(self):
         self._display_surf.fill(self.black)
@@ -124,15 +186,24 @@ class App:
     def on_cleanup(self):
         pygame.quit()
 
-    def on_execute(self):
-        if self.on_init() == False:
-            self._running = False
+    def game_loop(self):
         while self._running:
             for event in pygame.event.get():
                 self.on_event(event)
-            self.on_loop()
-            self.on_render()
+            if not self.game_over:
+                self.on_loop()
+                self.on_render()
+            else:
+                self.game_over_screen()
+                        
+
+    def on_execute(self):
+        if self.on_init() == False:
+            self._running = False
+        while True:  # Game loop
+            self.game_loop()
 
 if __name__ == '__main__':
     AppRunning = App()
     AppRunning.on_execute()
+   
