@@ -1,5 +1,6 @@
 import collections
 from pygame.locals import *
+import pygame.font
 import pygame
 import random as rand
 
@@ -15,7 +16,7 @@ class Apple:
         pygame.display.flip()
 
     def respawn_apple(self):
-        self.start_spawn_x_y = [(rand.randrange(0, 640)), (rand.randrange(0, 640))]
+        self.start_spawn_x_y = [(rand.randrange(0, 640 - self.applesize)), (rand.randrange(0, 640 - self.applesize))]
 
 class Snake:
     def __init__(self, apple):
@@ -44,13 +45,13 @@ class Snake:
             pygame.draw.rect(surface, self.white, pygame.Rect(segment[0], segment[1], self.segment_size, self.segment_size))
 
     def grow_snake(self):
-        self.snake_body.append(self.snake_body[-1])
+        self.snake_body.appendleft(self.snake_body[0])
 
     def eats_apple(self):
-        x_head, y_head = self.snake_body[0]
-        apple_pos_x, apple_pos_y = self.apple.start_spawn_x_y
-        return x_head == apple_pos_x and y_head == apple_pos_y
-
+        if pygame.Rect(self.snake_body[0], (self.segment_size, self.segment_size)).colliderect(pygame.Rect(self.apple.start_spawn_x_y, (self.apple.applesize, self.apple.applesize))):
+            return True
+    def snake_hit_self(self):
+        pass
 class App:
     def __init__(self):
         self._running = True
@@ -59,12 +60,27 @@ class App:
         self.apple = Apple()
         self.snake = Snake(self.apple)
         self.black = (0,0,0)
+        self.font = 'times new roman'
+        self.score = 0
+        self.fps = 20
 
     def on_init(self):
         pygame.init()
         self._display_surf = pygame.display.set_mode(self.size)
         self._running = True
         return True
+    
+    def game_over_screen(self):
+        pass
+
+    
+
+    def show_score(self):
+        pygame.font.init()
+        score_font = pygame.font.SysFont(None, 43)
+        text = score_font.render(str(self.score), True, (255,255,255), None)
+        self._display_surf.blit(text, (self.width / 2, self.height * 0.10))
+        pygame.display.flip()
 
     def on_event(self, event):
         if event.type == pygame.QUIT:
@@ -81,10 +97,20 @@ class App:
 
     def on_loop(self):
         clockobject = pygame.time.Clock()
-        clockobject.tick(20)
+        clockobject.tick(self.fps)
         self.snake.snake_move()
         self.snake.draw_snake(self._display_surf)
         if self.snake.eats_apple():
+            #balance this later
+            self.score += 10
+            if self.score >= 100:
+                self.fps += self.fps * 0.010
+            if self.score >= 200:
+                self.fps += self.fps * 0.010
+            if self.score >= 300:
+                self.fps += self.fps * 0.010
+            if self.score >= 400:
+                self.fps += self.fps * 0.010
             self.snake.grow_snake()
             self.apple.respawn_apple()
 
@@ -92,6 +118,7 @@ class App:
         self._display_surf.fill(self.black)
         self.apple.draw_apple(self._display_surf)
         self.snake.draw_snake(self._display_surf)
+        self.show_score()
         pygame.display.flip()
 
     def on_cleanup(self):
